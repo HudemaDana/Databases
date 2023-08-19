@@ -1,0 +1,62 @@
+Functional dependency
+	--> you take them from the constraints
+		--> if we say smth like "a film has only one director" 
+			==> Title -> Director (Director is dependent on the title) 
+		--> "any cinema has only one phone number"
+			==> Cinema -> Phone (Phone is dependent on the cinema)
+		-->"to a cinema,at a given hour, a single film can be played"
+			==> Cine,Time -> Film
+	--> denote as F+ --> closer of F --> a set that implies all FD of F
+	--> we say that F,G - equiv <==> F+ = G+
+------------------------------------------------------------------------------------
+
+Normal Forms
+1NF 	--> fiecare atribut are valori atomice (nu exista atribute care sa fie reprezentate ca multimi sau liste)
+2NF 	--> daca se afla 1NF si nu are DF partiale (atributele sunt dependente de toate elementele dintr-o cheie, nu doar de o parte din acestea)
+3NF 	--> daca se afla in 2NF si nu are DF transitive (toate atributele non-prime -- care nu sunt chei -- depind doar de atribute prime -- care sunt chei)
+BCNF 	--> daca se afla in 3NF si si pentru orice dependenta A->B, A e supercheie (supercheie --> multimea tuturor Candidate key-urilor)
+		--> pentru orice dependenta A->B , A nu poate fi non-prim (nu poate sa nu fie cheie), daca B este prim (daca este cheie)
+		--> toate dependentele sunt date de chei
+
+Tips 
+	--> se afla in 2NF (sigur) --> daca are 1PK
+	--> se afla in 3NF (sigur) --> daca are 1 non-prime attribute (si PK-urile depind de el - evident)
+------------------------------------------------------------------------------------
+
+Cum sa ajungem la descompunere BCNF
+	- avem o relatie R(A,B,C,D,E,F) cu A cheie si o mutime de dependente {BD->A, CE->D, B->C}
+		--> pornind de la fiecare dependeta din multime creem noi relatii --> descompunem tabela initiala in mia multe tabele
+			eg. 	CE->D o sa avem (C,E,D) si (A,B,D,F)  
+				--> tot ce e in partea dreapta a dependentei este scos din relatia initiala(adica non-prime attr. din noua tabela)
+	- la fel se face si pentru 3NF + la care mai putem sa adaugam relatii rendundante
+------------------------------------------------------------------------------------
+
+Redundant attr.
+	--> 	un atribut (a->B) e redundant in momentul in care daca scoate dependentaa din 
+		multimea noastra F si adaugam alta (a-A->B) care nu contine un element oarecare si 
+		obtinem aceiasi multime F
+		eg	{AB->C , A->B, B->A}
+			B - redundant --> explanation: din A->B putem sa ajungem la C fara a trece prin B
+							A ->B 	|==>  A->C
+							AB->C	|		
+	--> 	o multime este redundanta daca ajungem la aceiasi relatie si fara aceasta
+		eg 	{A->C, A->B, B->A, B->C, C->A}
+			A->C  - redundant --> explanation : se poate ajunge la acesta relatie folosind transitivitatea pe
+							A->B, B->C ==> A->C
+			B->C - redundant --> explanation : analog cu exemplul anterior 
+							B->A, A->C ==> B->C 
+------------------------------------------------------------------------------------
+
+Minimal covarege ( nu sunt unice )
+	--> se foloseste descompunerea 
+	--> se eleminina atributele redundante
+	--> se elimina DF redundante
+------------------------------------------------------------------------------------
+
+Modelul conceptual 	--> cum sunt structurate tabelele in baza de date (are in vedere normalizarea)
+Modelul logic 		--> datele care sunt puse la dispozitia utilizatorilor (queries that display data from our tables)
+modelul fizic 		--> imbunatatirea bazei de date folosind files and indexes
+------------------------------------------------------------------------------------
+
+Relational Algebra
+	Catul	-->

@@ -15,10 +15,16 @@ go
 select * from Tests
 select * from Tables
 select * from TestTables
+
+select * from PoliceStation
+select * from PoliceCars
+select * from Usage
 go
 
---insert into TestTables(TestID,TableID, NoOfRows, Position) values (7,3,100,1),(5,2,100,2),(3,1,100,3),(2,1,10,1),(4,2,100,2),(6,3,1000,3);
+--insert into TestTables(TestID,TableID, NoOfRows, Position) values (7,3,100,1),(5,2,100,2),(3,1,100,3),(2,1,10,1),(4,2,100,2),(6,3,999,3);
 --go
+
+--update TestTables set NoOfRows = '800' where TestID = 6
 
 create or alter view viewPoliceStation
 as
@@ -59,7 +65,6 @@ begin
 	declare @i int=0
 	while @i<@n
 	begin
-	---trebe sa fac insert in toate coloanele si in una din ele pun datele astea random(nu conteaza in care)
 		insert into PoliceStation(address,city,country,phone_number) values (CONCAT('PoliceStationAddress', @i),'c','c','c')
 		set @i=@i+1
 	end
@@ -70,7 +75,7 @@ create or alter procedure deletePoliceStation
 as
 begin
 ---in loc de pcId pun coloana in care am pus datele random
-	delete from PoliceStation where address like 'PoliceStationAddress %'
+	delete from PoliceStation where address like 'PoliceStationAddress%'
 end
 go
 
@@ -81,7 +86,7 @@ begin
 	declare @i int=0
 	while @i<@n
 	begin
-		insert into PoliceCars(car_number,PSid,model) values (CONCAT('CarNumber', @i),1,'a')
+		insert into PoliceCars(car_number,PSid,model) values (CONCAT('CarNr', @i),1,'a')
 		set @i=@i+1
 	end
 end
@@ -90,9 +95,10 @@ go
 create or alter procedure deletePoliceCars
 as
 begin
-	delete from PoliceCars where car_number like 'CarNumber %'
+	delete from PoliceCars where car_number like 'CarNr%'
 end
 go
+
 
 create or alter procedure addUsage
 @n int
@@ -100,30 +106,37 @@ as
 begin
 	declare @PCid int
 	declare @Tid int
-	declare curs CURSOR
+	declare addUsageCurs CURSOR
 		for
 
 		---PoliceStation pc -> fac select pentru el ca sa le ia doar pe cele de test
 		-- select PCid from PoliceCars where typeNume like 'Type %'
 
-			select t.Tid,(select PCid from PoliceCars where car_number like 'CarNumber %') as pcID
-			from Teams t cross join PoliceCars pc  
-	open curs
+			select t.Tid, pc.PCid
+			from Teams t cross join (select PCid from PoliceCars where car_number like 'CarNr%') pc  
 	
-	declare @i int =1
+	open addUsageCurs
+	fetch addUsageCurs
+	into @Tid, @PCid
+	
+	declare @i int = 0
 	while @i<@n
 		begin
-		fetch next from curs into @Tid, @PCid
 		insert into Usage(Tid, PCid, usageMinutes) values (@Tid, @PCid, -1*@i)
 		set @i=@i+1
+
+		fetch addUsageCurs
+		into @Tid, @PCid
 		end
+	close addUsageCurs
+	deallocate addUsageCurs
 end
 go
 
 create or alter procedure deleteUsage
 as
 begin
-	delete from Usage where usageMinutes<0
+	delete from Usage where usageMinutes<=0
 end
 go
 
@@ -133,21 +146,23 @@ begin
 	declare @testId int
 
 	declare fetchDeleteTests cursor
-	for select TestID from TestTables where TestID % 2 <> 0 and TestID>1 order by Position asc
+	for select tt.TestID from TestTables tt inner join Tests t on  tt.TestID=t.TestID where Name like 'delete%' order by Position asc
 
 	open fetchDeleteTests
 	fetch fetchDeleteTests into @testId
 	while @@FETCH_STATUS = 0
 	begin
 		declare @cmd varchar(MAX) = (select Name from Tests where TestID = @testId)
+		print(concat('deleting data from ',@cmd))
 		exec @cmd
-
+		
 		fetch fetchDeleteTests into @testId
 	end
 	close fetchDeleteTests
 	deallocate fetchDeleteTests
 end
 go
+
 
 create or alter procedure runInsertTests
 (@runTestId int)
@@ -158,7 +173,7 @@ begin
 	declare @numOfRows int
 
 	declare fetchInsertTests cursor
-	for select TestID, TableID, NoOfRows from TestTables where TestID % 2 = 0 order by Position asc
+	for select tt.TestID,tt.TableID, tt.NoOfRows from TestTables tt inner join Tests t on  tt.TestID=t.TestID where Name like 'add%' order by Position asc
 
 	open fetchInsertTests
 	fetch fetchInsertTests into @testId, @tableId, @numOfRows
@@ -166,7 +181,8 @@ begin
 	begin
 		declare @cmd varchar(MAX) = (select Name from Tests where TestID = @testId)
 		declare @startTime datetime = GETDATE()
-
+		
+		print(concat('inserting data in ',@cmd))
 		exec (@cmd + ' ' + @numOfRows)
 
 		declare @endTime datetime = GETDATE()
@@ -198,6 +214,7 @@ begin
 		declare @args varchar(MAX) = (select Name from Views where ViewID = @viewId)
 		declare @startTime datetime = GETDATE()
 		
+		print(concat('view data from ',@cmd))
 		exec (@cmd + ' ' + @args)
 
 		declare @endTime datetime = GETDATE()
@@ -240,10 +257,12 @@ begin
 		set @i = @i + 1
 	end
 
-	select * from TestRunTables
-	select * from TestRunViews
-	select * from TestRuns
+	--select * from TestRunTables
+	--select * from TestRunViews
+	--select * from TestRuns
 end
 go
 
-exec runTests 10
+exec runTests 1
+select * from Usage
+
